@@ -1,11 +1,10 @@
-import { test, expect } from '@chromatic-com/playwright';
+import { test, expect, takeSnapshot } from '@chromatic-com/playwright';
 
 const URL_DO_APP = 'https://moises-live-ui-v3.vercel.app/v3';
-
 const AUTH_KEY = 'moises:userToken';
 const AUTH_VALUE = 'APP-a2ccbf21-69d5-41f1-89a0-bb61eadcf231';
 
-test('Authenticated flow: Mute should work', async ({ page }) => {
+test('Authenticated flow: Mute should work', async ({ page }, testInfo) => {
   
   // 1. TOKEN INJECTION
   await page.addInitScript((dados) => {
@@ -19,7 +18,11 @@ test('Authenticated flow: Mute should work', async ({ page }) => {
   // --- QUICK NAVIGATION TO MUTE ---
   
   // Step 1: Welcome
-  await page.getByRole('button', { name: 'Continue' }).click();
+  // Only click if the button is visible.
+  const btnContinue = page.getByRole('button', { name: 'Continue' });
+  if (await btnContinue.isVisible()) {
+      await btnContinue.click();
+  }
 
   // Step 2: Turn on Toggle
   await page.getByRole('switch', { name: 'Toggle Switch for AI Volume Control' }).click();
@@ -30,6 +33,7 @@ test('Authenticated flow: Mute should work', async ({ page }) => {
   // --- MUTE TEST ---
   
   // Locate the Vocals mute button
+  // Using text filter to find the correct container
   const vocalsContainer = page.locator('div').filter({ hasText: 'Vocals' }).first();
   const botaoMute = vocalsContainer.getByRole('img', { name: /Stem Vocals/i });
   
@@ -37,10 +41,8 @@ test('Authenticated flow: Mute should work', async ({ page }) => {
   await botaoMute.click();
   
   // VALIDATION:
-  // If logged in, mute works and the "Connect your account" banner should NOT appear.
-  // We can validate that the banner is HIDDEN or take a screenshot of the muted button.
-  
   await expect(page.getByText('Connect your account')).toBeHidden(); // Banner should not exist
-  await expect(page).toHaveScreenshot('autenticado-vocals-muted.png');
   
+  // Take snapshot
+  await takeSnapshot(page, 'Autenticado-Vocals-Muted', testInfo);
 });

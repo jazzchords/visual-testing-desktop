@@ -1,87 +1,67 @@
-import { test, expect } from '@chromatic-com/playwright';
+import { test, expect, takeSnapshot } from '@chromatic-com/playwright';
 
 const URL_DO_APP = 'https://moises-live-ui-v3.vercel.app/v3';
 
-test('Full UI flow (4 states)', async ({ page }) => {
+test('Full UI flow (Guest)', async ({ page }, testInfo) => {
   
-
   await page.goto(URL_DO_APP);
   await page.waitForLoadState('networkidle');
 
   // --- WELCOME SCREEN ---
   await test.step('1. Welcome screen', async () => {
-
     await expect(page.getByText('Welcome to Moises Live')).toBeVisible();
     
-    await expect(page).toHaveScreenshot('01-welcome-screen.png');
+    await takeSnapshot(page, '01-Guest-Welcome', testInfo);
   });
 
-  // Playwright finds a button with the text "Continue" (case insensitive)
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // --- MAIN SCREEN (Toggle Off) ---
-    await test.step('2. Main screen (Toggle off)', async () => {
-        await expect(page.getByText('Turn on AI volume control')).toBeVisible({ timeout: 10000 });
-        
-        await expect(page).toHaveScreenshot('02-main-toggle-off.png');
-      });
+  // --- 2. MAIN SCREEN (Toggle off) ---
+  await test.step('2. Main screen', async () => {
+    await expect(page.getByText('Turn on AI volume control')).toBeVisible({ timeout: 10000 });
     
-      await page.getByRole('switch', { name: 'Toggle Switch for AI Volume Control' }).click();
-      
-    
-      // --- MUSIC TAB (Default) ---
-      await test.step('3. Music tab (Default)', async () => {
-      
-        await page.waitForTimeout(1000); 
+    await takeSnapshot(page, '02-Guest-Main', testInfo);
+  });
+  
+    // Turns on the Toggle
+  await page.getByRole('switch', { name: 'Toggle Switch for AI Volume Control' }).click();
 
-        await expect(page.getByText('Music')).toBeVisible();
-        await expect(page.getByText('Vocals')).toBeVisible(); 
+    // --- 3. MUSIC TAB (Validação de Visitante) ---
+  await test.step('3. Tab Music (Guest)', async () => {
     
-        await expect(page).toHaveScreenshot('03-music-tab.png');
-      });
-
-  await test.step('3. Music tab (Guest validation)', async () => {
-    
-    // 1. Validate that the app knows we are guests
-    // The log shows the banner exists: "Connect your account" [1]
+    // Validates Guest banner
     await expect(page.getByText('Connect your account')).toBeVisible();
 
-    // Define elements
     const vocalsContainer = page.locator('div').filter({ hasText: 'Vocals' }).first();
     const botaoMute = vocalsContainer.getByRole('img', { name: /Stem Vocals/i });
     const slider = vocalsContainer.getByRole('slider');
 
-    // 2. Test Mute BLOCK
-    // We try to click, but as guest, it should not mute.
+        // Teste de Bloqueio de Mute
     await botaoMute.click();
-    
-    // The screenshot will prove the icon stayed "on" (did not mute)
-    await expect(page).toHaveScreenshot('03-guest-mute-blocked.png');
+    await takeSnapshot(page, '03-Guest-Mute-Blocked', testInfo);
 
-
-    // 3. Test Slider LIMIT
+    // Test of Slider Limit
     await slider.hover();
-    // Try to click on the left edge (10%)
     const box = await slider.boundingBox();
     if (box) {
         await slider.click({ position: { x: box.width * 0.1, y: box.height / 2 } });
     }
     
-    // The screenshot will prove the slider stuck at 25% (or minimum allowed)
-    await expect(page).toHaveScreenshot('03-guest-slider-limited.png');
+    await takeSnapshot(page, '03-Guest-Slider-Limited', testInfo);
   });
 
-   // --- SPEECH TAB ---
-   await test.step('4. Speech tab', async () => {
+   // --- 4. SPEECH TAB ---
+   await test.step('4. Aba Speech', async () => {
     
-    await page.getByText('Speech').click();
-    
+    // Clicks on second tab (Speech) by position
+    await page.getByRole('button').nth(1).click();
     
     await expect(page.getByText('Vocals')).toBeVisible({ timeout: 15000 });
+    // Validates Other button with Regex
+    await expect(page.getByRole('button', { name: /Other/i })).toBeVisible();
     
-    await expect(page.getByRole('button', { name: 'Other' })).toBeVisible();
-
     await page.waitForTimeout(1000);
-    await expect(page).toHaveScreenshot('04-speech-tab.png');
+    
+    await takeSnapshot(page, '04-Guest-Speech-Tab', testInfo);
   });
 });

@@ -1,4 +1,4 @@
-import { test, expect } from '@chromatic-com/playwright';
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 
 const URL_DO_APP = 'https://moises-live-ui-v3.vercel.app/v3';
 
@@ -15,39 +15,41 @@ for (const rawLocale of rawLocales) {
   test.describe(`Moises Live - ${locale}`, () => {
     test.use({ locale: locale });
 
-    test('Validate layout and translations', async ({ page }) => {
+    test('Validar layout e traduções', async ({ page }, testInfo) => {
       
-      // 1. Access
       await page.goto(URL_DO_APP);
       await page.waitForLoadState('networkidle');
 
-      // --- "PICHAÇÃO" ---
-      // Isso vai pintar o site de vermelho só para o Chromatic gritar erro
-      await page.evaluate(() => document.body.style.backgroundColor = 'red'); 
-
-      // 2. WELCOME SCREEN
-      // Adicionei "-DEMO" no nome. Isso é uma mudança radical para o robô.
-      await expect(page).toHaveScreenshot(`01-welcome-demo-${locale}.png`);
+    // Welcome screen
+      await takeSnapshot(page, `01-Welcome`, testInfo);
+      // Click on continue button
       await page.getByRole('button').first().click();
 
-      // 3. MAIN SCREEN (TOGGLE OFF)
       await expect(page.getByRole('switch')).toBeVisible();
       await page.waitForTimeout(500); 
-      await expect(page).toHaveScreenshot(`02-main-${locale}.png`);
-      
-      // Click on toggle
+    
+      // Main screen
+      await takeSnapshot(page, `02-Main`, testInfo);
+
       await page.getByRole('switch').click();
 
-      // 3b. LOADING SCREEN
-      await expect(page).toHaveScreenshot(`02b-loading-${locale}.png`);
+      // Loading
+      await takeSnapshot(page, `03-Loading`, testInfo);
 
-      // 4. MUSIC TAB 
+      // Music Tab
       await expect(page.getByRole('slider').first()).toBeVisible({ timeout: 20000 });
-     
       await page.waitForTimeout(1000); 
       
-      await expect(page).toHaveScreenshot(`03-music-${locale}.png`);
-    });
+      await takeSnapshot(page, `04-Music`, testInfo);
+            
+      // Speech tab
 
+      await page.getByRole('button').nth(1).click();
+      
+      await expect(page.getByRole('slider')).toHaveCount(2, { timeout: 20000 });
+      await page.waitForTimeout(1000); // Estabiliza
+      
+      await takeSnapshot(page, `05-Speech`, testInfo);
+    });
   });
 }
