@@ -1,49 +1,55 @@
 import { test, expect, takeSnapshot } from '@chromatic-com/playwright';
+import { MoisesLivePage } from '../../pages/moises-live/MoisesLivePage';
 
-const URL_DO_APP = 'https://moises-live-ui-v3.vercel.app/v3';
 
-test('Full UI flow (Guest)', async ({ page }, testInfo) => {
+test('Full UI Flow (Guest) - With Page Object', async ({ page }, testInfo) => {
+
+  const moises = new MoisesLivePage(page);
   
-  await page.goto(URL_DO_APP);
-  await page.waitForLoadState('networkidle');
+  // Access
+  await moises.goto();
 
-  // --- WELCOME SCREEN ---
+  // --- Welcome Screen ---
   await test.step('1. Welcome screen', async () => {
+    // Validate that we are on the right screen
     await expect(page.getByText('Welcome to Moises Live')).toBeVisible();
     
     await takeSnapshot(page, '01-Guest-Welcome', testInfo);
   });
 
-  await page.getByRole('button', { name: 'Continue' }).click();
+  // Use the mapped element in the class to click
+  await moises.btnContinue.click();
 
   // --- 2. MAIN SCREEN (Toggle off) ---
   await test.step('2. Main screen', async () => {
     await expect(page.getByText('Turn on AI volume control')).toBeVisible({ timeout: 10000 });
     
-    await expect(page.getByText('Connect your account')).toBeVisible({ timeout: 15000 });
-
+    // Use the mapping of the banner
+    await expect(moises.bannerGuest).toBeVisible({ timeout: 15000 });
+    
     await takeSnapshot(page, '02-Guest-Main', testInfo);
   });
   
-    // Turn on the Toggle
-  await page.getByRole('switch', { name: 'Toggle Switch for AI Volume Control' }).click();
+  // Turn on the Toggle using the class method
+  await moises.enableAI();
 
-    // --- 3. MUSIC TAB (Validation of Guest) ---
+  // --- 3. MUSIC TAB (Validação de Visitante) ---
   await test.step('3. Tab Music (Guest)', async () => {
     
-    // Validates Guest banner
-    await expect(page.getByText('Connect your account')).toBeVisible();
+    // Validate  banner
+    await expect(moises.bannerGuest).toBeVisible();
 
-    const vocalsContainer = page.locator('div').filter({ hasText: 'Vocals' }).first();
-    const botaoMute = vocalsContainer.getByRole('img', { name: /Stem Vocals/i });
-    const slider = vocalsContainer.getByRole('slider').first();
-
-    // Test of Mute Blocked
-    await botaoMute.click();
+    // Teste de Bloqueio de Mute (Using class method)
+    // The method clicks on the mute button of Vocals
+    await moises.muteStem('Vocals');
+    
     await takeSnapshot(page, '03-Guest-Mute-Blocked', testInfo);
 
-    // Test of Slider Limit
+    // Slider Limit Test
+    // Access the 'sliders' property of the class
+    const slider = moises.sliders.first();
     await slider.hover();
+    
     const box = await slider.boundingBox();
     if (box) {
         await slider.click({ position: { x: box.width * 0.1, y: box.height / 2 } });
@@ -55,11 +61,11 @@ test('Full UI flow (Guest)', async ({ page }, testInfo) => {
    // --- 4. SPEECH TAB ---
    await test.step('4. Aba Speech', async () => {
     
-    // Clicks on second tab (Speech) by position
-    await page.getByRole('button').nth(1).click();
+    // Use the class method to switch to the tab (Index 1 = Speech)
+    await moises.switchToTab(1);
     
     await expect(page.getByText('Vocals')).toBeVisible({ timeout: 15000 });
-    // Validates Other button with Regex
+    // Validate Other button with Regex
     await expect(page.getByRole('button', { name: /Other/i })).toBeVisible();
     
     await page.waitForTimeout(1000);

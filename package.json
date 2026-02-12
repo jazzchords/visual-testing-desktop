@@ -1,9 +1,23 @@
 {
-  "name": "visual-testing-moises-live",
+  "name": "visual-testing-desktop",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npx playwright test",
+
+    "moiseslive:headless": "npx playwright test tests/moises-live --project=chromium",
+    "moiseslive:headed": "npx playwright test tests/moises-live --project=chromium --headed",
+    "moiseslive:chromatic": "npx playwright test tests/moises-live --project=chromium && npx chromatic --playwright --project-token=chpt_69b5eae024a9100",
+
+    "fender:headless": "npx playwright test tests/fender-plugin --project=chromium",
+    "fender:headed": "npx playwright test tests/fender-plugin --project=chromium --headed",
+    "fender:chromatic": "npx playwright test tests/fender-plugin --project=chromium && npx chromatic --playwright --project-token=chpt_5d6f96758b80bb7",
+
+    "ableton:headless": "npx playwright test tests/ableton-plugin --project=chromium",
+    "ableton:headed": "npx playwright test tests/ableton-plugin --project=chromium --headed",
+    "ableton:chromatic": "npx playwright test tests/ableton-plugin --project=chromium && npx chromatic --playwright --project-token=chpt_61ed069dc57c713"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

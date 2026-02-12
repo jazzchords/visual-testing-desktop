@@ -1,6 +1,6 @@
 import { test, expect, takeSnapshot } from '@chromatic-com/playwright';
 
-const URL_DO_APP = 'https://moises-live-ui-v3.vercel.app/v3';
+const URL_DO_APP = 'https://moises-live-ui-v3-stage.vercel.app/v3';
 
 test.afterEach(async ({ page }) => {
     //clean localStorage
